@@ -24,11 +24,11 @@
  */
 
 /*!
-  \file threshold_identification.hpp
-  \brief Threshold logic function identification
-
-  \author CS-472 2020 Fall students
-*/
+ \file threshold_identification.hpp
+ \brief Threshold logic function identification
+ 
+ \author CS-472 2020 Fall students
+ */
 
 #pragma once
 
@@ -47,29 +47,29 @@ namespace kitty
 {
 
 /*! \brief Threshold logic function identification
-
-  Given a truth table, this function determines whether it is a threshold logic function (TF)
-  and finds a linear form if it is. A Boolean function is a TF if it can be expressed as
-
-  f(x_1, ..., x_n) = \sum_{i=1}^n w_i x_i >= T
-
-  where w_i are the weight values and T is the threshold value.
-  The linear form of a TF is the vector [w_1, ..., w_n; T].
-
-  \param tt The truth table
-  \param plf Pointer to a vector that will hold a linear form of `tt` if it is a TF.
-             The linear form has `tt.num_vars()` weight values and the threshold value
-             in the end.
-  \return `true` if `tt` is a TF; `false` if `tt` is a non-TF.
-*/
+ 
+ Given a truth table, this function determines whether it is a threshold logic function (TF)
+ and finds a linear form if it is. A Boolean function is a TF if it can be expressed as
+ 
+ f(x_1, ..., x_n) = \sum_{i=1}^n w_i x_i >= T
+ 
+ where w_i are the weight values and T is the threshold value.
+ The linear form of a TF is the vector [w_1, ..., w_n; T].
+ 
+ \param tt The truth table
+ \param plf Pointer to a vector that will hold a linear form of `tt` if it is a TF.
+ The linear form has `tt.num_vars()` weight values and the threshold value
+ in the end.
+ \return `true` if `tt` is a TF; `false` if `tt` is a non-TF.
+ */
 
 template<typename TT, typename = std::enable_if_t<is_complete_truth_table<TT>::value>>
 inline bool less( const TT& first, const TT& second )
 {
-  if ( first.num_vars() != second.num_vars() )
-  {
-    return false;
-  }
+    if ( first.num_vars() != second.num_vars() )
+    {
+        return false;
+    }
     for(int i = 0;  i <first.num_bits(); i++){
         if (!(get_bit(first,i) <= get_bit(second,i))) {
             return false;
@@ -82,7 +82,7 @@ inline bool greater( const TT& first, const TT& second )
 {
     if ( first.num_vars() != second.num_vars() )
     {
-      return false;
+        return false;
     }
     for(int i = 0;  i <first.num_bits(); i++){
         if (!(get_bit(first,i) >= get_bit(second,i))) {
@@ -90,22 +90,21 @@ inline bool greater( const TT& first, const TT& second )
         }
     }
     return true;
-  }
+}
 template<typename TT, typename = std::enable_if_t<is_complete_truth_table<TT>::value>>
 bool is_threshold( const TT& tt, std::vector<int64_t>* plf = nullptr )
 {
+    /*Vector to remember which variable where fliped*/
     std::vector<int64_t> modified_variable (tt.num_vars(),0);
-  std::vector<int64_t> linear_form;
+    std::vector<int64_t> linear_form;
     auto positive_unate = tt;
     std::vector<int64_t> positive_unate_sol;
-  /* TODO */
-  /* if tt is non-TF: */
+    
+    /* We check if f is binate in any variable: if this is the case then f is not TF
+     If f is negative unate in variable x, we substitute x with x' with flip_inplace
+     and we saved the variable x in modified_variable to be able to retrieve the solution*/
     
     for(int i = 0; i < positive_unate.num_vars(); i++){
-       /* std::cout <<" tonio cofactor1 " << to_binary(cofactor1(positive_unate, i)) << "\n";
-        std::cout <<" tonio cofactor0 " << to_binary(cofactor0(positive_unate, i)) << "\n";
-        std::cout <<" tonio less " << less(cofactor1(positive_unate, i),cofactor0(positive_unate, i)) << "\n";
-        std::cout <<" tonio more " << greater(cofactor1(positive_unate, i),cofactor0(positive_unate, i)) << "\n";*/
         if(less(cofactor1(positive_unate, i),cofactor0(positive_unate, i))){
             kitty::flip_inplace(positive_unate, i);
             modified_variable.at(i) = 1;
@@ -115,53 +114,46 @@ bool is_threshold( const TT& tt, std::vector<int64_t>* plf = nullptr )
             return false;
         }
     }
-   const auto cubes =  isop(positive_unate);
- 
-     for ( auto cube : cubes )
-     {
-       cube.print( tt.num_vars() );
-       std::cout << std::endl;
-         
-     }
-    const auto cubes_neg =  isop(unary_not(positive_unate));
-  
-      for ( auto cube : cubes_neg )
-      {
-        cube.print( tt.num_vars() );
-        std::cout << std::endl;
-          
-      }
     
-      lprec *lp;
-      int Ncol, *colno = NULL, ret = 0;
-      REAL *row = NULL;
-
-      /* We will build the model row by row
-         So we start with creating a model with 0 rows and 2 columns */
-      Ncol = tt.num_vars() + 1;
-      lp = make_lp(0, Ncol);
-      if(lp == NULL)
-        ret = 1; /* couldn't construct a new model... */
-
-      if(ret == 0) {
-        /* let us name our variables. Not required, but can be useful for debugging */
-          const char* letter[26] = {
-              "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M",
-              "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"};
-          for(int i = 1; i <= tt.num_vars(); i++){
-              set_col_name(lp, i, (char*)letter[i-1]);
-          }
-          set_col_name(lp, tt.num_vars() + 1, "T");
-          
-        /* create space large enough for one row */
+    /*Use the ISOP function to compute the cubes for positive_unate and  positive_unate' */
+    const auto cubes =  isop(positive_unate);
+    const auto cubes_neg =  isop(unary_not(positive_unate));
+    
+    
+    /*LP SOLVER CONFIGURATION code inspired from "http://lpsolve.sourceforge.net"*/
+    
+    lprec *lp;
+    int Ncol, *colno = NULL, ret = 0;
+    REAL *row = NULL;
+    
+    /* We build the model row by row*/
+    Ncol = tt.num_vars() + 1; // Num_vars + T
+    lp = make_lp(0, Ncol);
+    if(lp == NULL)
+        ret = 1;                /* couldn't construct a new model... */
+    
+    if(ret == 0) {
+        /*We name our variables A, B etc*/
+        const char* letter[25] = {
+            "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M",
+            "N", "O", "P", "Q", "R", "S", "U", "V", "W", "X", "Y", "Z"};
+        assert(tt.num_vars() < 25);           // Check if we have enough letter to represent the problem
+        for(int i = 1; i <= tt.num_vars(); i++){
+            set_col_name(lp, i, (char*)letter[i-1]);
+        }
+        set_col_name(lp, tt.num_vars() + 1, "T");
+        
+        /* Malloc space*/
         colno = (int *) malloc(Ncol * sizeof(*colno));
         row = (REAL *) malloc(Ncol * sizeof(*row));
         if((colno == NULL) || (row == NULL))
-          ret = 2;
-      }
-
+            ret = 2;
+    }
+    
     if(ret == 0) {
-      set_add_rowmode(lp, TRUE);  /* makes building the model faster if it is done rows by row */
+        set_add_rowmode(lp, TRUE);  /* Makes building the model faster if it is done rows by row */
+        
+        /*We ensure that all parameters at positive*/
         
         for(int j = 0; j <= tt.num_vars(); j++){
             colno[0] = j+1;
@@ -169,101 +161,103 @@ bool is_threshold( const TT& tt, std::vector<int64_t>* plf = nullptr )
             add_constraintex(lp, 1, row, colno, GE, 0);
         }
         
-    
+        /*We create our constraints based on the cubes of positive_unate*/
         for(int i = 0; i < cubes.size() ; i++){
             auto cube = cubes.at(i);
             for(int j = 0; j < tt.num_vars(); j++){
-                if(cube.get_mask(j)==0){
+                if(cube.get_mask(j)==0){            //If j is don't care then it won't be in the constraint
                     colno[j] = j+1;
                     row[j] = 0;
                 }else{
-                    if(cube.get_bit(j)==1){
+                    if(cube.get_bit(j)==1){         //If j is 1 then it will be in the constraint
                         colno[j] = j+1;
                         row[j] = 1;
-                    }else{
+                    }else{                          //If j is 0 then it won't be in the constraint
                         colno[j] = j+1;
                         row[j] = 0;
                     }
                 }
             }
+            /*Add -T to the constraint*/
             colno[tt.num_vars()] = tt.num_vars() + 1;
             row[tt.num_vars()] = -1;
             add_constraintex(lp, tt.num_vars()+1, row, colno, GE, 0);
         }
-      }
+    }
     if(ret == 0) {
-      
+        /*We create our constraints based on the cubes of positive_unate'*/
         for(int i = 0; i < cubes_neg.size() ; i++){
             auto cube = cubes_neg.at(i);
-            cube.print( tt.num_vars() );
-            std::cout << std::endl;
             for(int j = 0; j < tt.num_vars(); j++){
-                if(cube.get_mask(j)==0){
+                if(cube.get_mask(j)==0){            //If j is don't care then it will be in the constraint
+                    colno[j] = j+1;
                     colno[j] = j+1;
                     row[j] = 1;
                 }else{
-                    if(cube.get_bit(j)==0){
+                    if(cube.get_bit(j)==0){         //If j is 0 then it won't be in the constraint
                         colno[j] = j+1;
                         row[j] = 0;
-                    }else{
+                    }else{                          //If j is 1 then it will be in the constraint
                         colno[j] = j+1;
                         row[j] = 1;
                     }
                 }
                 
             }
+            /*Add -T to the constraint and the right side of the inequation have -1*/
             colno[tt.num_vars()] = tt.num_vars() + 1;
             row[tt.num_vars()] = -1;
             add_constraintex(lp, tt.num_vars() + 1, row, colno, LE, -1);
         }
-      }
-
-
-      if(ret == 0) {
+    }
+    
+    /*Add the objective function */
+    if(ret == 0) {
         set_add_rowmode(lp, FALSE); /* rowmode should be turned off again when done building the model */
-          int j = 0;
-          for(int i = 1; i <= tt.num_vars(); i++){
-                  colno[j] = i;
-                  row[j++] = 1;
-          }
-          colno[j] = tt.num_vars() + 1;
-          row[j++] = 1;
-          set_obj_fnex(lp, j, row, colno);
-      }
-
-      if(ret == 0) {
-        /* set the object direction to maximize */
+        int j = 0;
+        for(int i = 1; i <= tt.num_vars(); i++){
+            colno[j] = i;
+            row[j++] = 1;
+        }
+        colno[j] = tt.num_vars() + 1;
+        row[j++] = 1;
+        set_obj_fnex(lp, j, row, colno);
+    }
+    
+    if(ret == 0) {
+        /* set the object direction to minimize */
         set_minim(lp);
-
-        /* just out of curioucity, now show the model in lp format on screen */
-        /* this only works if this is a console application. If not, use write_lp and a filename */
-        write_LP(lp, stdout);
+        
+        /* Print or save the LP problem with A,B etc
+         useful to debug*/
+        //write_LP(lp, stdout);
         /* write_lp(lp, "model.lp"); */
-
-
+        
+        
         /* Now let lpsolve calculate a solution */
         ret = solve(lp);
-          if(ret != 0){
-              return false;
-              
-          }
-      }
-
-      if(ret == 0) {
-        /* a solution is calculated, now lets get some results */
-
-        /* objective value */
-        printf("Objective value: %f\n", get_objective(lp));
-
+        /*If there is no feasible solution then f is not TF*/
+        if(ret != 0){
+            return false;
+            
+        }
+    }
+    /*If there is a feasible solution then f is TF*/
+    if(ret == 0) {
+        
+        /* Useful to debug */
+        //printf("Objective value: %f\n", get_objective(lp));
+        
         /* variable values */
         get_variables(lp, row);
         for(int j = 0; j < Ncol; j++){
-          printf("%s: %f\n", get_col_name(lp, j + 1), row[j]);
+            //printf("%s: %f\n", get_col_name(lp, j + 1), row[j]);
             positive_unate_sol.push_back(row[j]);
-         }
+        }
         /* we are done now */
-      }
-    for(int i = 0; i< tt.num_vars(); i++){
+    }
+    /*Find the initial solution based on which variable f was fliped on.*/
+    for(int i = 0; i < tt.num_vars(); i++){
         if(modified_variable.at(i)==1){
             int dummy = positive_unate_sol.at(i);
             positive_unate_sol.at(i) = -dummy;
@@ -271,25 +265,22 @@ bool is_threshold( const TT& tt, std::vector<int64_t>* plf = nullptr )
         }
     }
     linear_form = positive_unate_sol;
-      /* free allocated memory */
-      if(row != NULL)
+    /* free allocated memory */
+    if(row != NULL)
         free(row);
-      if(colno != NULL)
+    if(colno != NULL)
         free(colno);
-
-      if(lp != NULL) {
+    
+    if(lp != NULL) {
         /* clean up such that all used memory by lpsolve is freed */
         delete_lp(lp);
-      }
-
-
-  /* if tt is TF: */
-  /* push the weight and threshold values into `linear_form` */
-  if ( plf )
-  {
-    *plf = linear_form;
-  }
-  return true;
+    }
+    
+    if ( plf )
+    {
+        *plf = linear_form;
+    }
+    return true;
 }
 
 } /* namespace kitty */
